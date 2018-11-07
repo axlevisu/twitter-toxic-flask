@@ -65,7 +65,7 @@ def clean_text(text):
     return text
 
 INDATA_LOCATION = 'data/train.csv'
-
+PREPROCESSED_DATA_LOCATION = 'data/pre_processed_data.csv'
 # utility definitions for easier handling of the dataset column names
 TEXT_COLUMN = 'comment_text'
 CLASS_TOXIC, CLASS_SEVER_TOXIC, CLASS_OBSCENE, CLASS_THREAT, CLASS_INSULT, \
@@ -74,12 +74,12 @@ CLASS_TOXIC, CLASS_SEVER_TOXIC, CLASS_OBSCENE, CLASS_THREAT, CLASS_INSULT, \
 CLASSES = [CLASS_TOXIC, CLASS_SEVER_TOXIC, CLASS_OBSCENE, CLASS_THREAT, CLASS_INSULT, CLASS_IDENTITY_HATE]
 
 # read the comments and associated classification data 
-df = pd.read_csv(INDATA_LOCATION,names = ["id",TEXT_COLUMN] + CLASSES, skiprows=1)
+df = pd.read_csv(PREPROCESSED_DATA_LOCATION, names = ["id",TEXT_COLUMN] + CLASSES, skiprows=1)
 df = df.drop('id',axis=1)
 df= df.dropna()
 
 process = psutil.Process(os.getpid())
-print "After loading data"
+print "After loading preprocessed data"
 print(process.memory_info().rss/(1024*1024))
 
 # print df.head()
@@ -90,14 +90,6 @@ process = psutil.Process(os.getpid())
 print "After loading model"
 print(process.memory_info().rss/(1024*1024))
 
-df['comment_text'] = df['comment_text'].map(lambda x: clean_text(x))
-labels = df[CLASSES]
-
-
-process = psutil.Process(os.getpid())
-print "After preprocessing"
-print(process.memory_info().rss/(1024*1024))
-
 
 ### Create sequence
 vocabulary_size = 5000
@@ -106,7 +98,7 @@ tokenizer.fit_on_texts(df['comment_text'])
 
 
 process = psutil.Process(os.getpid())
-print "After tokenizer"
+print "After creating tokenizer"
 print(process.memory_info().rss/(1024*1024))
 
 del df
