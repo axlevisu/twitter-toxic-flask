@@ -1,24 +1,24 @@
 from flask import Flask, jsonify, request
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.models import Sequential
-from keras.layers import Dense, Flatten, LSTM, Conv1D, MaxPooling1D, Dropout, Activation
-from keras.layers.embeddings import Embedding
-import nltk
-import string
-import numpy as np
+from string import punctuation
 import pandas as pd
 from nltk.corpus import stopwords
 import re
 from nltk.stem.snowball import SnowballStemmer
-from sklearn.manifold import TSNE
 from keras.models import load_model
+import os
+import psutil
 
+process = psutil.Process(os.getpid())
+print "After loading libraries"
+print(process.memory_info().rss/(1024*1024))
+print process
 
 def clean_text(text):
     
     ## Remove puncuation
-    text = text.translate(None, string.punctuation)
+    text = text.translate(None, punctuation)
     
     ## Convert words to lower case and split them
     text = text.lower().split()
@@ -77,16 +77,52 @@ CLASSES = [CLASS_TOXIC, CLASS_SEVER_TOXIC, CLASS_OBSCENE, CLASS_THREAT, CLASS_IN
 df = pd.read_csv(INDATA_LOCATION,names = ["id",TEXT_COLUMN] + CLASSES, skiprows=1)
 df = df.drop('id',axis=1)
 df= df.dropna()
+
+process = psutil.Process(os.getpid())
+print "After loading data"
+print(process.memory_info().rss/(1024*1024))
+
 # print df.head()
 loaded_model = load_model('myy_model.h5')
 loaded_model._make_predict_function()
+
+process = psutil.Process(os.getpid())
+print "After loading model"
+print(process.memory_info().rss/(1024*1024))
+
 df['comment_text'] = df['comment_text'].map(lambda x: clean_text(x))
 labels = df[CLASSES]
+
+
+process = psutil.Process(os.getpid())
+print "After preprocessing"
+print(process.memory_info().rss/(1024*1024))
+
+
 ### Create sequence
 vocabulary_size = 5000
 tokenizer = Tokenizer(num_words= vocabulary_size)
 tokenizer.fit_on_texts(df['comment_text'])
+
+
+process = psutil.Process(os.getpid())
+print "After tokenizer"
+print(process.memory_info().rss/(1024*1024))
+
+del df
+
+process = psutil.Process(os.getpid())
+print "After deleting df"
+print(process.memory_info().rss/(1024*1024))
+
+
 app = Flask(__name__)
+
+
+process = psutil.Process(os.getpid())
+print "After loading flask"
+print(process.memory_info().rss/(1024*1024))
+
 
 # return 'Advice for ',referenceId
 @app.route('/analysis/', methods=['GET', 'POST'])
@@ -99,7 +135,17 @@ def analysis():
     sequences = tokenizer.texts_to_sequences([tweet])
     data = pad_sequences(sequences, maxlen=50)
     print data
+
+    process = psutil.Process(os.getpid())
+    print "After data"
+    print(process.memory_info().rss/(1024*1024))
+
     prediction = loaded_model.predict(data)[0]
+
+    process = psutil.Process(os.getpid())
+    print "After preprocessing"
+    print(process.memory_info().rss/(1024*1024))
+
     send_tweet = "On a scale of 1 to 10."
     for i in xrange(0,6):
     	if i == 4:
